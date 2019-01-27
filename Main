@@ -1,0 +1,45 @@
+from flask import Flask, render_template,request,redirect,url_for
+
+import shelve
+from AddRecordFormS import *
+from MallRates import *
+
+
+app = Flask(__name__)
+
+#SHAZREEN AFIRA 181782W
+@app.route('/parkingfees', methods =['GET','POST'])
+def parkingfees():
+    form = AddRecordFormS(request.form)
+    print('The method is ' + request.method)
+    if request.method == 'POST':
+        if form.validate() == False:
+            print('All fields are required.')
+        else:
+            recordList = {}
+            db = shelve.open('storage.db','c')
+            try:
+                recordList = db['Records']
+            except:
+                print("fail to open database")
+            new_fees = MallRates(form.mallname.data)
+            print("test")
+            recordList[new_fees.get_id()] = new_fees
+            db['Records'] =recordList
+            db.close()
+            return redirect(url_for('price'))
+    return render_template('parkingfees.html', form=form)
+
+#SHAZREEN AFIRA 181782W
+@app.route('/price')
+def price():
+    dictionary = {}
+    db = shelve.open('storage.db','r')
+    dictionary = db['Records']
+    db.close()
+
+    list =[]
+    for key in dictionary:
+        item = dictionary.get(key)
+        list.append(item)
+    return render_template('price.html',records=list, count=len(list))
